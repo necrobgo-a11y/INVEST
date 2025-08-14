@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mon Budget & Invest — v4</title>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="manifest" href="manifest.webmanifest?v=4" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css?v=4" />
+</head>
+<body class="theme-auto">
+  <div id="lock-overlay" class="lock hidden">
+    <div class="lock-card">
+      <h2>Déverrouiller</h2>
+      <p class="muted">Entrez votre code PIN pour ouvrir l'app</p>
+      <input type="password" id="pin-input" maxlength="6" placeholder="••••" />
+      <div class="row">
+        <button id="pin-unlock" class="btn btn-primary">Déverrouiller</button>
+        <button id="pin-forget" class="btn">Réinitialiser</button>
+      </div>
+      <div id="pin-hint" class="muted small"></div>
+    </div>
+  </div>
+
+  <div class="app-wrap">
+    <header class="app-header glass">
+      <div class="brand">
+        <div class="logo">€</div>
+        <div class="titles">
+          <h1>Mon Budget & Invest</h1>
+          <p>v4 — PWA locale, UI améliorée, CSV import, DCA, PIN</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <select id="theme-select" title="Thème" class="select">
+          <option value="auto" selected>Thème : Auto</option>
+          <option value="dark">Sombre</option>
+          <option value="light">Clair</option>
+        </select>
+        <button id="install-btn" class="btn btn-primary btn-install" style="display:none">Installer</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-button active" data-tab="dashboard">📊 Tableau de bord</button>
+      <button class="tab-button" data-tab="transactions">💸 Transactions</button>
+      <button class="tab-button" data-tab="budgets">📦 Budgets</button>
+      <button class="tab-button" data-tab="invest">📈 Invest</button>
+      <button class="tab-button" data-tab="export">⬆️⬇️ Import/Export</button>
+      <button class="tab-button" data-tab="parametres">⚙️ Paramètres</button>
+    </nav>
+
+    <main class="main">
+      <section id="dashboard" class="tab active">
+        <div class="grid-cards">
+          <div class="card glass">
+            <div class="card-head">Solde global</div>
+            <div class="metric big" id="global-balance">€0</div>
+            <div class="muted" id="global-invest">Dont investissement: €0</div>
+          </div>
+          <div class="card glass">
+            <div class="card-head">Flux du mois <span id="current-month-name"></span></div>
+            <div class="metrics-row">
+              <div class="metric-col"><div class="label">Revenus</div><div class="metric" id="month-income">€0</div></div>
+              <div class="metric-col"><div class="label">Dépenses</div><div class="metric" id="month-expense">€0</div></div>
+              <div class="metric-col"><div class="label">Épargne/Invest.</div><div class="metric" id="month-saving">€0</div></div>
+            </div>
+          </div>
+          <div class="card glass">
+            <div class="card-head">Dépenses par catégorie (mois)</div>
+            <canvas id="catChart" width="640" height="260"></canvas>
+          </div>
+          <div class="card glass">
+            <div class="card-head">Flux 12 derniers mois</div>
+            <canvas id="lineChart" width="800" height="260"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section id="transactions" class="tab">
+        <div class="section-head"><h2>Transactions</h2></div>
+        <form id="tx-form" class="form-grid">
+          <label>Type
+            <select id="tx-type">
+              <option value="income">Revenu</option>
+              <option value="expense">Dépense</option>
+              <option value="invest">Investissement</option>
+              <option value="transfer">Virement</option>
+            </select>
+          </label>
+          <label>Date
+            <input type="date" id="tx-date" />
+          </label>
+          <label>Compte
+            <select id="tx-account">
+              <option>Banque</option>
+              <option>PEA</option>
+              <option>CTO</option>
+              <option>Crypto</option>
+            </select>
+          </label>
+          <label>Catégorie
+            <input list="category-list" id="tx-category" placeholder="Courses, Logement…"/>
+            <datalist id="category-list"></datalist>
+          </label>
+          <label>Description
+            <input type="text" id="tx-desc" placeholder="Note (optionnel)"/>
+          </label>
+          <label>Montant (€)
+            <input type="number" step="0.01" id="tx-amount"/>
+          </label>
+          <button class="btn btn-primary">Ajouter</button>
+        </form>
+        <div class="toolbar">
+          <input type="text" id="tx-search" class="input" placeholder="Rechercher…"/>
+          <button id="tx-clear" class="btn btn-danger">Tout supprimer</button>
+        </div>
+        <div class="table-wrap">
+          <table id="tx-table" class="table">
+            <thead><tr><th>Date</th><th>Type</th><th>Compte</th><th>Catégorie</th><th>Description</th><th>Montant</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="budgets" class="tab">
+        <div class="section-head"><h2>Budgets mensuels</h2></div>
+        <form id="budget-form" class="form-grid">
+          <label>Catégorie
+            <input type="text" id="budget-category" placeholder="ex: Courses"/>
+          </label>
+          <label>Montant (€)
+            <input type="number" step="0.01" id="budget-amount"/>
+          </label>
+          <button class="btn btn-primary">Ajouter / MAJ</button>
+        </form>
+        <div class="toolbar">
+          <button id="budget-clear" class="btn">Réinitialiser budgets</button>
+        </div>
+        <div class="table-wrap">
+          <table id="budget-table" class="table">
+            <thead><tr><th>Catégorie</th><th>Budget</th><th>Dépensé</th><th>Reste</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="invest" class="tab">
+        <div class="section-head"><h2>Investissements (PEA / CTO / Crypto)</h2></div>
+        <div class="split">
+          <div>
+            <h3 class="h3">Lignes & cibles</h3>
+            <form id="hold-form" class="form-grid">
+              <label>Compte
+                <select id="hold-account"><option>PEA</option><option>CTO</option><option>Crypto</option></select>
+              </label>
+              <label>Actif
+                <input type="text" id="hold-asset" placeholder="ESE, Air Liquide, CNDX, BTC"/>
+              </label>
+              <label>Cible (%)
+                <input type="number" step="0.1" id="hold-target" placeholder="50"/>
+              </label>
+              <label>Valeur (€)
+                <input type="number" step="0.01" id="hold-value" placeholder="1200"/>
+              </label>
+              <button class="btn btn-primary">Ajouter / MAJ</button>
+            </form>
+            <div class="table-wrap">
+              <table id="hold-table" class="table">
+                <thead><tr><th>Compte</th><th>Actif</th><th>Valeur</th><th>Cible</th><th>Écart</th><th></th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <button id="preset-btn" class="btn">➕ Appliquer mes presets (PEA/CTO/Crypto)</button>
+          </div>
+          <div>
+            <h3 class="h3">Plan DCA mensuel</h3>
+            <form id="dca-form" class="form-grid">
+              <label>Actif
+                <input type="text" id="dca-asset" placeholder="ESE, Air Liquide, BTC"/>
+              </label>
+              <label>Montant/mois (€)
+                <input type="number" step="1" id="dca-amount"/>
+              </label>
+              <label>Jour (1–28)
+                <input type="number" min="1" max="28" id="dca-day" value="5"/>
+              </label>
+              <button class="btn btn-primary">Ajouter / MAJ</button>
+            </form>
+            <div class="table-wrap">
+              <table id="dca-table" class="table">
+                <thead><tr><th>Actif</th><th>Montant</th><th>Jour</th><th>Prochain</th><th></th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="export" class="tab">
+        <div class="section-head"><h2>Import / Export</h2></div>
+        <div class="toolbar">
+          <button id="export-json" class="btn btn-primary">Exporter JSON</button>
+          <button id="export-csv" class="btn">Exporter CSV (transactions)</button>
+          <label class="btn file">Import JSON <input type="file" id="import-json" accept=".json"/></label>
+        </div>
+        <div class="toolbar">
+          <select id="csv-source" class="select">
+            <option value="generic" selected>CSV générique (date,type,account,category,desc,amount)</option>
+            <option value="boursorama">CSV Boursorama (opérations)</option>
+            <option value="traderepublic">CSV Trade Republic (transactions)</option>
+          </select>
+          <label class="btn file">Importer CSV <input type="file" id="import-csv" accept=".csv"/></label>
+        </div>
+      </section>
+
+      <section id="parametres" class="tab">
+        <div class="section-head"><h2>Paramètres</h2></div>
+        <div class="form-grid">
+          <label>Thème
+            <select id="theme-select-dup">
+              <option value="auto" selected>Auto</option>
+              <option value="dark">Sombre</option>
+              <option value="light">Clair</option>
+            </select>
+          </label>
+          <label>Devise
+            <select id="currency">
+              <option value="EUR" selected>EUR (€)</option>
+              <option value="USD">USD ($)</option>
+            </select>
+          </label>
+          <label>Catégories suggérées
+            <input type="text" id="suggested-cats" placeholder="Courses, Logement, Transport, Santé, ..."/>
+          </label>
+          <label>Code PIN (4–6 chiffres)
+            <input type="password" id="pin-set" maxlength="6" placeholder="laisser vide pour désactiver"/>
+          </label>
+          <label>Indice PIN (optionnel)
+            <input type="text" id="pin-hint-input" placeholder="ex: anniversaire, code unique..."/>
+          </label>
+          <button id="save-settings" class="btn btn-primary">Enregistrer</button>
+          <button id="reset-all" class="btn btn-danger">Réinitialiser TOUT</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>v4 — thèmes, courbes mensuelles, import CSV, PIN, presets</span>
+    </footer>
+  </div>
+
+  <script src="app.js?v=4"></script>
+  <script>
+  (function(){
+    var deferredPrompt = null;
+    var btn = document.getElementById('install-btn');
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault(); deferredPrompt = e; if(btn) btn.style.display='inline-block';
+    });
+    if(btn){
+      btn.addEventListener('click', function(){ if(!deferredPrompt) return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(function(){ deferredPrompt=null; btn.style.display='none'; }); });
+    }
+    if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js?v=4'); }); }
+  })();
+  </script>
+</body>
+</html>
