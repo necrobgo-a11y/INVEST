@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>INVEST — DIAG</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:20px;background:#0b1220;color:#eef2ff}
+  .box{border:2px dashed #6ea8fe;border-radius:12px;padding:16px;margin:12px 0;background:rgba(255,255,255,.06)}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  a{color:#fff;text-decoration:none;padding:8px 12px;border:1px solid #6ea8fe;border-radius:999px}
+  a.active{background:#1a2250}
+  .muted{color:#9aa3bb}
+  pre{white-space:pre-wrap;background:rgba(0,0,0,.35);padding:10px;border-radius:10px}
+</style>
+<script>
+(function(){
+  // Kill any service worker & caches
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r=>{try{r.unregister()}catch(e){}}));
+  }
+  if (window.caches && caches.keys) {
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+  }
+  // Loud signals
+  window.addEventListener('error', e => {
+    const el = document.getElementById('errors');
+    if(el){ el.textContent += '\n' + (e.message || e.error || e).toString(); }
+  });
+})();
+</script>
+</head>
+<body>
+  <h1>INVEST — <span style="color:#6ea8fe">DIAGNOSTIC</span></h1>
+  <div class="box">
+    <div><strong>Hash courant :</strong> <span id="hash">—</span></div>
+    <div class="muted">Clique sur un onglet pour voir si le routeur réagit.</div>
+    <div class="row" style="margin-top:8px">
+      <a href="#/dashboard" class="nav">Dashboard</a>
+      <a href="#/transactions" class="nav">Transactions</a>
+      <a href="#/budgets" class="nav">Budgets</a>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>Vue</h3>
+    <div id="view">JS pas encore initialisé…</div>
+  </div>
+
+  <div class="box">
+    <h3>Logs</h3>
+    <pre id="logs">(vide)</pre>
+    <h3>Erreurs</h3>
+    <pre id="errors">(aucune)</pre>
+  </div>
+
+<script>
+(function(){
+  function log(msg){
+    const el = document.getElementById('logs');
+    el.textContent += "\n" + msg;
+    console.log("[DIAG]", msg);
+  }
+  function setHashText(){
+    document.getElementById('hash').textContent = location.hash || '(vide)';
+  }
+  function render(){
+    const v = document.getElementById('view');
+    const h = location.hash.replace('#','') || '#/dashboard';
+    document.querySelectorAll('a.nav').forEach(a=>a.classList.toggle('active', a.getAttribute('href')===h));
+    if(h === '#/dashboard'){ v.textContent = 'Vue Dashboard OK'; }
+    else if(h === '#/transactions'){ v.textContent = 'Vue Transactions OK'; }
+    else if(h === '#/budgets'){ v.textContent = 'Vue Budgets OK'; }
+    else { v.textContent = 'Route inconnue: ' + h; }
+    setHashText();
+    log('render -> ' + h);
+  }
+  window.addEventListener('hashchange', ()=>{ log('hashchange'); render(); });
+  // Init
+  log('JS INITIALISÉ ✅');
+  if(!location.hash){ location.hash = '#/dashboard'; }
+  render();
+  alert('DIAG: JS a bien démarré ✅\nSi vous voyez cette alerte, le problème vient du cache ou d'un ancien fichier.'); // volontairement bruyant
+})();
+</script>
+</body>
+</html>
