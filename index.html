@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>INVEST — Finances perso & PEA/CTO/Crypto</title>
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.webmanifest?v=5" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./style.css?v=5" />
+</head>
+<body class="theme-auto">
+  <div id="splash" class="splash">
+    <div class="splash-inner">
+      <div class="logo-xl">€</div>
+      <div class="appname">INVEST</div>
+      <div class="tagline">Budget, PEA, CTO, Crypto — rapide et élégant</div>
+      <div class="loader"></div>
+    </div>
+  </div>
+
+  <div id="lock" class="lock hidden">
+    <div class="lock-card">
+      <h2>Déverrouiller</h2>
+      <p class="muted">Entrez votre code PIN</p>
+      <input type="password" id="pin-input" maxlength="6" placeholder="••••" />
+      <div class="row">
+        <button id="pin-unlock" class="btn btn-primary">OK</button>
+        <button id="pin-forget" class="btn">Désactiver</button>
+      </div>
+      <div id="pin-hint" class="muted small"></div>
+    </div>
+  </div>
+
+  <div class="app">
+    <header class="topbar glass">
+      <div class="brand">
+        <div class="logo-sm">€</div>
+        <div class="names">
+          <div class="title">INVEST</div>
+          <div class="subtitle muted">PWA locale — v5 Premium</div>
+        </div>
+      </div>
+      <div class="actions">
+        <select id="theme" class="select">
+          <option value="auto" selected>Auto</option>
+          <option value="dark">Sombre</option>
+          <option value="light">Clair</option>
+        </select>
+        <button id="install" class="btn btn-primary" style="display:none">Installer</button>
+      </div>
+    </header>
+
+    <nav class="nav glass">
+      <a href="#/dashboard" data-route class="navlink active">📊 Dashboard</a>
+      <a href="#/transactions" data-route class="navlink">💸 Transactions</a>
+      <a href="#/budgets" data-route class="navlink">📦 Budgets</a>
+      <a href="#/invest" data-route class="navlink">📈 Invest</a>
+      <a href="#/goals" data-route class="navlink">🎯 Objectifs</a>
+      <a href="#/analysis" data-route class="navlink">🧠 Analyses</a>
+      <a href="#/io" data-route class="navlink">⬆️⬇️ Import/Export</a>
+      <a href="#/settings" data-route class="navlink">⚙️ Paramètres</a>
+    </nav>
+
+    <main id="view" class="view"></main>
+    <footer class="foot muted">INVEST v5 Premium — thèmes, charts, CSV, PIN, presets — PWA</footer>
+  </div>
+
+  <script src="./app.js?v=5"></script>
+  <script>
+  (function(){
+    var dp=null, installBtn=document.getElementById('install');
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); dp=e; installBtn.style.display='inline-block'; });
+    if(installBtn){ installBtn.addEventListener('click', function(){ if(!dp) return; dp.prompt(); dp.userChoice.then(function(){ dp=null; installBtn.style.display='none'; }); }); }
+    if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js?v=5'); }); }
+  })();
+  </script>
+</body>
+</html>

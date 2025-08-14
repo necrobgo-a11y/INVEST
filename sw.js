@@ -1,0 +1,5 @@
+const CACHE='invest-cache-v5p';
+const ASSETS=['./','./index.html?v=5','./style.css?v=5','./app.js?v=5','./manifest.webmanifest?v=5','./icons/icon-192.png','./icons/icon-512.png'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));self.skipWaiting());});
+self.addEventListener('activate',e=>{e.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));await self.clients.claim();})());});
+self.addEventListener('fetch',e=>{const req=e.request;e.respondWith((async()=>{const cached=await caches.match(req);try{const fresh=await fetch(req);if(req.method==='GET'&&fresh&&fresh.ok){const c=await caches.open(CACHE);c.put(req,fresh.clone());}return fresh;}catch(err){return cached||Response.error();}})());});
