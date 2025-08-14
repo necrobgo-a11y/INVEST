@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>INVEST — Pro Noir/Gris/Blanc/Bleu</title>
+<meta name="theme-color" content="#0a0a0a" />
+<style>
+/* ==== Palette personnalisable (modifie juste ces 4 lignes) ==== */
+:root{
+  --black:#0a0a0a;         /* Noir */
+  --gray:#d1d5db;          /* Gris clair */
+  --white:#ffffff;         /* Blanc */
+  --blue:#1e3a8a;          /* Bleu foncé */
+  /* dérivés */
+  --bg:var(--black);
+  --bg2:#0f1116;
+  --text:var(--white);
+  --muted:#aab1bb;
+  --card:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.14);
+  --accent:var(--blue);
+  --accent2:#3856c6;
+  --danger:#ef6b6b;
+}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+a{color:inherit;text-decoration:none}
+.glass{background:var(--card);border:1px solid var(--border);backdrop-filter:blur(10px);border-radius:18px;box-shadow:0 10px 32px rgba(0,0,0,.35)}
+.app{max-width:1200px;margin:36px auto 28px;padding:0 16px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.logo{display:flex;gap:12px;align-items:center}
+.logo-badge{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:900}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;padding:10px;position:sticky;top:10px;z-index:10}
+.nav button{padding:10px 14px;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--text);cursor:pointer;transition:.15s transform, .15s background}
+.nav button:hover{transform:translateY(-1px)}
+.nav button.active{background:linear-gradient(90deg,#0b1b4a,var(--blue));border-color:var(--blue)}
+.view{padding:14px}
+.card{padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:10px 0}
+.metric{background:var(--card);border:1px dashed var(--border);border-radius:14px;padding:12px}
+.metric .label{font-size:12px;color:var(--muted)}
+.metric .val{font-weight:800;font-size:22px}
+input,select{padding:10px;border:1px solid var(--border);border-radius:12px;background:transparent;color:var(--text);outline:none}
+button{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer}
+.btn-primary{background:linear-gradient(90deg,var(--accent2),var(--accent));border-color:var(--accent2);color:#e9eefc;font-weight:700}
+.btn-danger{background:linear-gradient(90deg,#ff7878,var(--danger));border-color:var(--danger);color:#2a0000}
+.bar{height:10px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:999px;overflow:hidden}
+.bar>span{display:block;height:100%;background:linear-gradient(90deg,#95f7c2,var(--accent))}
+.tag{display:inline-block;padding:6px 10px;border:1px solid var(--border);border-radius:999px;margin-right:6px;margin-bottom:6px}
+.right{display:flex;gap:8px;align-items:center}
+/* mini panneau pour éditer la palette */
+.palette{display:flex;gap:8px;align-items:center}
+.palette input{width:36px;height:36px;padding:0;border-radius:10px;border:1px solid var(--border)}
+</style>
+<script>
+// Couper SW & caches
+(function(){
+  if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>{try{r.unregister()}catch(e){}}));
+  if (window.caches && caches.keys) caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)));
+})();
+</script>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-badge">€</div>
+      <div>
+        <div style="font-weight:800">INVEST</div>
+        <div class="muted small">Palette pro noir/gris/blanc/bleu — variables CSS</div>
+      </div>
+    </div>
+    <div class="right">
+      <button id="themeToggle" class="btn">🌙 / ☀️ Mode</button>
+      <button id="exportJson" class="btn-primary">Exporter</button>
+    </div>
+  </header>
+
+  <div class="nav glass">
+    <button class="tab active" data-view="dashboard">📊 Dashboard</button>
+    <button class="tab" data-view="transactions">💸 Transactions</button>
+    <button class="tab" data-view="budgets">📦 Budgets</button>
+    <button class="tab" data-view="invest">📈 Invest</button>
+    <button class="tab" data-view="goals">🎯 Objectifs</button>
+    <button class="tab" data-view="analysis">🧠 Analyses</button>
+    <button class="tab" data-view="io">⬆️⬇️ Import/Export</button>
+    <button class="tab" data-view="settings">⚙️ Paramètres</button>
+  </div>
+
+  <main id="view" class="view glass">Chargement…</main>
+</div>
+
+<script>
+(function(){
+'use strict';
+const qs=s=>document.querySelector(s);
+const qsa=s=>Array.from(document.querySelectorAll(s));
+const cur=(n,c='EUR')=>{try{return new Intl.NumberFormat('fr-FR',{style:'currency',currency:c}).format(+n||0)}catch(e){return '€'+(+n||0)}};
+const esc=s=>String(s||'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\\'':'&#039;'}[m]));
+
+const KEY='invest_palette_pro_v1';
+let state={settings:{currency:'EUR',categories:['Logement','Courses','Transport','Santé','Divertissement','Épargne','Voyage','Abonnements','Impôts']},transactions:[],budgets:[],goals:[]};
+try{const j=localStorage.getItem(KEY); if(j){const o=JSON.parse(j); if(o&&typeof o==='object') state=o;}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+
+// === Palette live ===
+
+// Theme toggle
+let darkMode=true;
+qs('#themeToggle').addEventListener('click',()=>{
+  darkMode=!darkMode;
+  if(darkMode){
+    document.documentElement.style.setProperty('--black','#0a0a0a');
+    document.documentElement.style.setProperty('--gray','#d1d5db');
+    document.documentElement.style.setProperty('--white','#ffffff');
+    document.documentElement.style.setProperty('--blue','#1e3a8a');
+  }else{
+    document.documentElement.style.setProperty('--black','#ffffff');
+    document.documentElement.style.setProperty('--gray','#555555');
+    document.documentElement.style.setProperty('--white','#000000');
+    document.documentElement.style.setProperty('--blue','#1e3a8a');
+  }
+});
+
+['cBlack','cGray','cWhite','cBlue'].forEach(id=>{
+  qs('#'+id).addEventListener('input', applyPalette);
+});
+function applyPalette(){
+  document.documentElement.style.setProperty('--black', qs('#cBlack').value);
+  document.documentElement.style.setProperty('--gray',  qs('#cGray').value);
+  document.documentElement.style.setProperty('--white', qs('#cWhite').value);
+  document.documentElement.style.setProperty('--blue',  qs('#cBlue').value);
+}
+// init palette (au cas où navigateur diffère)
+applyPalette();
+
+// === NAV ===
+qsa('.tab').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
+
+// === Views ===
+function dashboardView(){
+  return `
+  <section class="grid">
+    <div class="card glass">
+      <h3>Vue rapide</h3>
+      <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="metric"><div class="label">Capital total</div><div class="val" id="k_total">€0</div></div>
+        <div class="metric"><div class="label">Variation du mois</div><div class="val" id="k_var">€0</div></div>
+        <div class="metric"><div class="label">Taux d’épargne</div><div class="val" id="k_save">0%</div></div>
+      </div>
+      <p class="muted small">Ajoute au moins un revenu et quelques dépenses pour voir les métriques.</p>
+    </div>
+    <div class="card glass">
+      <h3>Top catégories (mois)</h3>
+      <div id="tags"></div>
+    </div>
+    <div class="card glass">
+      <h3>Récap budgets du mois</h3>
+      <div id="budgRecap"></div>
+    </div>
+  </section>`;
+}
+function refreshKPI(){
+  const now=new Date(), y=now.getFullYear(), m=now.getMonth();
+  const month=state.transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m;});
+  let inc=0,exp=0,inv=0;
+  month.forEach(t=>{ if(t.type==='income') inc+=+t.amount; else if(t.type==='expense') exp+=Math.abs(+t.amount); else if(t.type==='invest') inv+=Math.abs(+t.amount); });
+  let global=0; state.transactions.forEach(t=>{ if(t.type==='income') global+=+t.amount; else if(t.type!=='transfer') global-=Math.abs(+t.amount); });
+  const k_total=qs('#k_total'), k_var=qs('#k_var'), k_save=qs('#k_save');
+  if(k_total) k_total.textContent=cur(global,state.settings.currency);
+  if(k_var) k_var.textContent=cur(inc-exp-inv,state.settings.currency);
+  if(k_save) k_save.textContent=inc?(((inc-exp-inv)/Math.max(1,inc))*100).toFixed(1)+'%':'0%';
+  const byCat={}; month.forEach(t=>{ if(t.type==='expense'){ byCat[t.category]=(byCat[t.category]||0)+Math.abs(+t.amount);} });
+  const tags=qs('#tags'); if(tags){ tags.innerHTML=''; Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,8).forEach(([c,v])=>{const el=document.createElement('span');el.className='tag';el.textContent=`${c} — ${cur(v,state.settings.currency)}`;tags.appendChild(el);}); if(!Object.keys(byCat).length){tags.innerHTML='<span class="muted small">Aucune dépense ce mois.</span>';}}
+  const br=qs('#budgRecap'); if(br){ br.innerHTML=''; state.budgets.forEach(b=>{ const spent=month.filter(t=>t.type==='expense' && (t.category||'').toLowerCase()===(b.category||'').toLowerCase()).reduce((s,t)=>s+Math.abs(+t.amount),0); const left=(+b.amount||0)-spent; const wrap=document.createElement('div'); wrap.style.marginBottom='8px'; wrap.innerHTML=`<div class="small muted">${esc(b.category)} — ${cur(spent)} / ${cur(b.amount)} (${cur(left)} restant)</div><div class="bar"><span style="width:${Math.min(100,Math.max(0,(spent/Math.max(1,b.amount))*100)).toFixed(0)}%"></span></div>`; br.appendChild(wrap); }); if(!state.budgets.length){br.innerHTML='<span class="muted small">Aucun budget défini.</span>';} }
+}
+
+// Transactions
+function txView(){
+  return `
+  <section class="card glass">
+    <h3>Transactions</h3>
+    <form id="txf" class="form">
+      <label>Type
+        <select id="tt"><option value="income">Revenu</option><option value="expense">Dépense</option><option value="invest">Investissement</option><option value="transfer">Virement</option></select>
+      </label>
+      <label>Date <input type="date" id="td"></label>
+      <label>Compte
+        <select id="ta"><option>Banque</option><option>PEA</option><option>CTO</option><option>Crypto</option></select>
+      </label>
+      <label>Catégorie <input id="tc" list="cats" placeholder="Courses, Logement..." /><datalist id="cats"></datalist></label>
+      <label>Description <input id="te" placeholder="Note" /></label>
+      <label>Montant <input id="tm" type="number" step="0.01" /></label>
+      <button class="btn-primary">Ajouter</button>
+    </form>
+    <div class="right" style="margin:8px 0;">
+      <input id="tq" placeholder="Rechercher…" />
+      <button id="tclr" class="btn-danger">Tout supprimer</button>
+    </div>
+    <div class="table-wrap"><table class="table"><thead><tr>
+      <th>Date</th><th>Type</th><th>Compte</th><th>Catégorie</th><th>Description</th><th>Montant</th><th></th>
+    </tr></thead><tbody id="tb"></tbody></table></div>
+  </section>`;
+}
+function bindTx(){
+  try{qs('#td').valueAsDate=new Date()}catch(e){}
+  const dl=qs('#cats'); dl.innerHTML=''; state.settings.categories.forEach(c=>{const o=document.createElement('option');o.value=c;dl.appendChild(o);});
+  qs('#txf').addEventListener('submit',e=>{
+    e.preventDefault();
+    const t={id:String(Date.now())+Math.random(),date:qs('#td').value,type:qs('#tt').value,account:qs('#ta').value,category:qs('#tc').value||'(NC)',desc:qs('#te').value||'',amount:+(qs('#tm').value||0)};
+    if(!t.date || isNaN(t.amount) || !t.amount){ alert('Date et montant requis'); return; }
+    state.transactions.unshift(t); save(); renderTx(); refreshKPI(); e.target.reset(); try{qs('#td').valueAsDate=new Date()}catch(_){}
+  });
+  qs('#tq').addEventListener('input',renderTx);
+  qs('#tclr').addEventListener('click',()=>{ if(confirm('Supprimer toutes les transactions ?')){ state.transactions=[]; save(); renderTx(); refreshKPI(); } });
+  renderTx();
+}
+function renderTx(){
+  const tb=qs('#tb'); if(!tb) return; tb.innerHTML='';
+  const q=(qs('#tq').value||'').toLowerCase();
+  state.transactions.forEach(t=>{
+    if(JSON.stringify(t).toLowerCase().indexOf(q)===-1) return;
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${t.date}</td><td>${t.type}</td><td>${t.account}</td><td>${t.category}</td><td>${esc(t.desc)}</td><td>${cur(t.amount,state.settings.currency)}</td><td><button data-id="${t.id}" class="small">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('button[data-id]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.getAttribute('data-id'); state.transactions=state.transactions.filter(x=>x.id!==id); save(); renderTx(); refreshKPI();
+  }));
+}
+
+// Budgets
+function bdgView(){
+  return `
+  <section class="card glass">
+    <h3>Budgets</h3>
+    <form id="bf" class="form">
+      <label>Catégorie <input id="bc" /></label>
+      <label>Montant <input id="ba" type="number" step="0.01" /></label>
+      <button class="btn-primary">Ajouter / MAJ</button>
+    </form>
+    <div class="table-wrap"><table class="table"><thead><tr><th>Catégorie</th><th>Budget</th><th></th></tr></thead><tbody id="bb"></tbody></table></div>
+  </section>`;
+}
+function bindBdg(){
+  qs('#bf').addEventListener('submit',e=>{
+    e.preventDefault();
+    const c=(qs('#bc').value||'').trim(), a=+(qs('#ba').value||0);
+    if(!c){ alert('Catégorie requise'); return; }
+    const idx=state.budgets.findIndex(x=>x.category.toLowerCase()===c.toLowerCase());
+    if(idx>=0) state.budgets[idx].amount=a; else state.budgets.push({category:c,amount:a});
+    save(); renderBdg(); refreshKPI();
+    e.target.reset();
+  });
+  renderBdg();
+}
+function renderBdg(){
+  const tb=qs('#bb'); if(!tb) return; tb.innerHTML='';
+  state.budgets.forEach(b=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${esc(b.category)}</td><td>${cur(b.amount,state.settings.currency)}</td><td><button class="small" data-cat="${esc(b.category)}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('button[data-cat]').forEach(b=>b.addEventListener('click',()=>{
+    const c=b.getAttribute('data-cat'); state.budgets=state.budgets.filter(x=>x.category!==c); save(); renderBdg(); refreshKPI();
+  }));
+}
+
+// Goals
+function goalsView(){
+  return `
+  <section class="card glass">
+    <h3>Objectifs</h3>
+    <form id="gf" class="form">
+      <label>Nom <input id="gn" placeholder="Ex: Capital 50 000 €" /></label>
+      <label>Type <select id="gt"><option value="networth">Capital total</option><option value="saving">Épargne mensuelle</option></select></label>
+      <label>Cible <input id="ga" type="number" step="0.01" /></label>
+      <button class="btn-primary">Ajouter / MAJ</button>
+    </form>
+    <div class="table-wrap"><table class="table"><thead><tr><th>Nom</th><th>Type</th><th>Cible</th><th>Progression</th><th></th></tr></thead><tbody id="gb"></tbody></table></div>
+  </section>`;
+}
+function bindGoals(){
+  qs('#gf').addEventListener('submit',e=>{
+    e.preventDefault();
+    const n=(qs('#gn').value||'').trim(), t=qs('#gt').value, a=+(qs('#ga').value||0);
+    if(!n || !a){ alert('Nom et cible requis'); return; }
+    const idx=state.goals.findIndex(g=>g.name.toLowerCase()===n.toLowerCase());
+    const g={name:n,type:t,target:a};
+    if(idx>=0) state.goals[idx]=g; else state.goals.push(g);
+    save(); renderGoals();
+    e.target.reset();
+  });
+  renderGoals();
+}
+function renderGoals(){
+  const tb=qs('#gb'); if(!tb) return; tb.innerHTML='';
+  let inc=0,exp=0,inv=0,global=0;
+  state.transactions.forEach(t=>{ if(t.type==='income') inc+=+t.amount; else if(t.type==='expense') exp+=Math.abs(+t.amount); else if(t.type==='invest') inv+=Math.abs(+t.amount); });
+  global = inc - exp - inv;
+  state.goals.forEach(g=>{
+    let ratio=0,label='—';
+    if(g.type==='networth'){ ratio = global/Math.max(1,g.target); label = cur(global)+' / '+cur(g.target); }
+    else { const saving = inc-exp-inv; ratio = saving/Math.max(1,g.target); label = cur(saving)+' / '+cur(g.target)+' (mois)'; }
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${esc(g.name)}</td><td>${g.type}</td><td>${cur(g.target,state.settings.currency)}</td>
+      <td style="min-width:220px"><div class="bar"><span style="width:${Math.min(100,Math.max(0,ratio*100)).toFixed(0)}%"></span></div><div class="small muted">${esc(label)}</div></td>
+      <td><button class="small" data-name="${esc(g.name)}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('button[data-name]').forEach(b=>b.addEventListener('click',()=>{
+    const n=b.getAttribute('data-name'); state.goals=state.goals.filter(x=>x.name!==n); save(); renderGoals();
+  }));
+}
+
+// Analysis
+function analysisView(){
+  return `
+  <section class="grid">
+    <div class="card glass">
+      <h3>Ratios clés</h3>
+      <div id="ratios"></div>
+    </div>
+    <div class="card glass">
+      <h3>Recommandations</h3>
+      <ul id="reco"></ul>
+    </div>
+  </section>`;
+}
+function renderAnalysis(){
+  const ratios=qs('#ratios'),reco=qs('#reco');
+  ratios.innerHTML=''; reco.innerHTML='';
+  let inc=0,exp=0,inv=0,cap=0;
+  state.transactions.forEach(t=>{ if(t.type==='income'){inc+=+t.amount;cap+=+t.amount;} else if(t.type==='expense'){exp+=Math.abs(+t.amount);cap-=Math.abs(+t.amount);} else if(t.type==='invest'){inv+=Math.abs(+t.amount);cap-=Math.abs(+t.amount);} });
+  const saving = inc-exp-inv, rate = inc?((saving/inc)*100):0;
+  function addRatio(label,value){ const p=document.createElement('div'); p.className='small'; p.innerHTML=`<span class="muted">${label} :</span> <strong>${value}</strong>`; ratios.appendChild(p); }
+  addRatio('Épargne du mois', `${cur(saving,state.settings.currency)} (${rate.toFixed(1)}%)`);
+  addRatio('Capital estimé', cur(cap,state.settings.currency));
+  function addReco(txt){ const li=document.createElement('li'); li.textContent=txt; reco.appendChild(li); }
+  if(rate<10) addReco('Taux d’épargne faible : réduis 1–2 catégories ce mois.');
+  else addReco('Bon taux d’épargne — continue !');
+  if(inv>inc*0.5) addReco('Investissements élevés ce mois : vérifie ta trésorerie.');
+}
+
+// IO
+function ioView(){
+  return `
+  <section class="card glass">
+    <h3>Import / Export</h3>
+    <div class="form">
+      <button id="exj" class="btn-primary">Exporter JSON</button>
+      <button id="exc" class="btn">Exporter CSV (transactions)</button>
+      <label class="btn" style="text-align:center">Importer JSON<input id="imj" type="file" accept=".json" style="display:none"></label>
+      <label class="btn" style="text-align:center">Importer CSV générique<input id="imc" type="file" accept=".csv" style="display:none"></label>
+    </div>
+    <p class="muted small">Les données restent locales (navigateur). Pense à sauvegarder.</p>
+  </section>`;
+}
+function bindIO(){
+  qs('#exj').onclick=()=>{ const data=JSON.stringify(state,null,2); dl('budget.json',data,'application/json'); };
+  qs('#exc').onclick=()=>{ const header='date,type,account,category,desc,amount\n'; const rows=state.transactions.map(t=>[t.date,t.type,t.account,t.category,esc(t.desc),t.amount].join(',')); dl('transactions.csv',header+rows.join('\n'),'text/csv'); };
+  qs('#imj').addEventListener('change', e=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ try{ const d=JSON.parse(fr.result); if(!d.transactions) throw new Error('Fichier invalide'); state=d; save(); show('dashboard'); alert('Import JSON OK'); }catch(err){ alert('Import raté: '+err.message); } }; fr.readAsText(f); });
+  qs('#imc').addEventListener('change', e=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ try{ const rows=parseCSV(fr.result); importGeneric(rows); save(); show('dashboard'); alert('Import CSV OK'); }catch(err){ alert('Import CSV raté: '+err.message); } }; fr.readAsText(f); });
+}
+function dl(name,content,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type:type})); a.download=name; a.click(); }
+function parseCSV(txt){ const lines=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n'); const rows=[]; for(let i=0;i<lines.length;i++){ const line=lines[i]; if(!line.trim()) continue; const cells=[], re=/(\"([^\"]|\"\")*\"|[^,]+)/g; let m; while((m=re.exec(line))!==null){ let cell=m[0]; if(cell.startsWith('\"')&&cell.endsWith('\"')) cell=cell.slice(1,-1).replace(/\"\"/g,'\"'); cells.push(cell); } rows.push(cells); } return rows; }
+function importGeneric(rows){ const h=rows[0].map(s=>String(s).trim().toLowerCase()); const id=k=>h.indexOf(k); if(id('date')<0||id('type')<0||id('amount')<0) throw new Error('En-têtes requis: date,type,amount'); for(let i=1;i<rows.length;i++){ const r=rows[i]; if(!r||!r.length) continue; const tx={date:r[id('date')],type:r[id('type')],account:r[id('account')]||'Banque',category:r[id('category')]||'(NC)',desc:r[id('desc')]||'',amount:+String(r[id('amount')]||'0').replace(',','.')}; if(!tx.date) continue; state.transactions.unshift(tx); } }
+
+// Settings
+function settingsView(){
+  return `
+  <section class="card glass">
+    <h3>Paramètres</h3>
+    <div class="form">
+      <label>Devise
+        <select id="cu"><option value="EUR">EUR (€)</option><option value="USD">USD ($)</option></select>
+      </label>
+      <label>Catégories suggérées
+        <input id="cg" placeholder="séparées par des virgules" />
+      </label>
+      <div class="right">
+        <button id="sav" class="btn-primary">Enregistrer</button>
+        <button id="preset" class="btn">Charger un preset</button>
+        <button id="rst" class="btn-danger">Réinitialiser</button>
+      </div>
+    </div>
+  </section>`;
+}
+function bindSettings(){
+  const cu=qs('#cu'), cg=qs('#cg');
+  cu.value=state.settings.currency;
+  cg.value=state.settings.categories.join(', ');
+  qs('#sav').onclick=()=>{
+    state.settings.currency=cu.value;
+    const list=cg.value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(list.length) state.settings.categories=list;
+    save(); alert('Paramètres enregistrés');
+  };
+  qs('#preset').onclick=()=>{
+    const cats=['Logement','Courses','Transport','Santé','Divertissement','Épargne','Voyage','Abonnements','Impôts','Frais bancaires','ESE','Air Liquide','CNDX','BTC','LINK','RNDR','NEAR'];
+    state.settings.categories=cats; save(); cg.value=cats.join(', '); alert('Preset catégories chargé');
+  };
+  qs('#rst').onclick=()=>{ if(confirm('Supprimer TOUTES les données ?')){ localStorage.removeItem(KEY); location.reload(); } };
+}
+
+// Show controller
+function show(view){
+  qsa('.tab').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='dashboard'){ qs('#view').innerHTML=dashboardView(); refreshKPI(); }
+  else if(view==='transactions'){ qs('#view').innerHTML=txView(); bindTx(); }
+  else if(view==='budgets'){ qs('#view').innerHTML=bdgView(); bindBdg(); }
+  else if(view==='goals'){ qs('#view').innerHTML=goalsView(); bindGoals(); }
+  else if(view==='analysis'){ qs('#view').innerHTML=analysisView(); renderAnalysis(); }
+  else if(view==='io'){ qs('#view').innerHTML=ioView(); bindIO(); }
+  else if(view==='settings'){ qs('#view').innerHTML=settingsView(); bindSettings(); }
+  else if(view==='invest'){ qs('#view').innerHTML=`<section class="card glass"><h3>Invest</h3><p class="muted small">Section simplifiée (on ajoutera DCA/répartition ensuite).</p></section>`; }
+}
+
+// Init
+qs('#exportJson').addEventListener('click', ()=>{ const data=JSON.stringify(state,null,2); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([data],{type:'application/json'})); a.download='budget.json'; a.click(); });
+show('dashboard');
+})();
+</script>
+</body>
+</html>
