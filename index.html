@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INVEST - Dark/Light</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #000000;
+  --card: #f0f0f0;
+  --border: #cccccc;
+}
+body.dark {
+  --bg: #0a0a0a;
+  --text: #f5f5f5;
+  --card: #1a1a1a;
+  --border: #333333;
+}
+* {box-sizing:border-box;font-family:Arial, sans-serif;margin:0;padding:0;}
+body {background: var(--bg); color: var(--text); padding: 20px;}
+header {display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+nav {display:flex;gap:10px;margin-bottom:20px;}
+nav button {padding:8px 12px;border:1px solid var(--border);background:var(--card);cursor:pointer;}
+nav button.active {font-weight:bold;}
+section {border:1px solid var(--border);background:var(--card);padding:15px;border-radius:5px;}
+</style>
+</head>
+<body class="dark">
+<header>
+  <h1>INVEST</h1>
+  <button id="themeToggle">🌙 Mode</button>
+</header>
+<nav>
+  <button class="tab active" data-view="dashboard">Dashboard</button>
+  <button class="tab" data-view="transactions">Transactions</button>
+  <button class="tab" data-view="budgets">Budgets</button>
+  <button class="tab" data-view="settings">Paramètres</button>
+</nav>
+<main id="view"></main>
+<script>
+const qs = s => document.querySelector(s);
+const qsa = s => document.querySelectorAll(s);
+
+function show(view) {
+  qsa('.tab').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='dashboard'){
+    qs('#view').innerHTML = '<section><h2>Dashboard</h2><p>Vue d'ensemble de vos finances.</p></section>';
+  } else if(view==='transactions'){
+    qs('#view').innerHTML = '<section><h2>Transactions</h2><p>Liste et gestion de vos transactions.</p></section>';
+  } else if(view==='budgets'){
+    qs('#view').innerHTML = '<section><h2>Budgets</h2><p>Gestion de vos budgets.</p></section>';
+  } else if(view==='settings'){
+    qs('#view').innerHTML = '<section><h2>Paramètres</h2><p>Réglages de l'application.</p></section>';
+  }
+}
+
+qsa('.tab').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
+show('dashboard');
+
+// Toggle dark/light
+qs('#themeToggle').addEventListener('click', ()=>{
+  document.body.classList.toggle('dark');
+  qs('#themeToggle').textContent = document.body.classList.contains('dark') ? '🌙 Mode' : '☀️ Mode';
+});
+</script>
+</body>
+</html>
